@@ -23,7 +23,8 @@ router.route('/:id')
         res.status(response.status).json(response) 
     })
     .delete(async(req, res) => {
-
+        const response = await categoryService.remove(req.params.id)
+        res.status(response.status).json(response)
     })
 
 module.exports = router

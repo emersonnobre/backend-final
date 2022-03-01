@@ -1,5 +1,5 @@
 const db = require('../config/db')
-const schema = 'category'
+const schema = 'article'
 
 function get() {
     return db(schema)
@@ -13,16 +13,12 @@ function getWhere(whereClause) {
     return db(schema.where(whereClause))
 }
 
-function save(category) {
-    return db(schema).insert(category)
+function save(article) {
+    return db(schema).insert(article)
 }
 
-function update(category, id) {
-    return db(schema).update(category).where({ id })
-}
-
-function remove(id) {
-    return db(schema).where({ id }).del()
+function update(article, id) {
+    return db(schema).update(article).where({ id })
 }
 
 module.exports = {
@@ -31,5 +27,4 @@ module.exports = {
     getWhere,
     save,
     update,
-    remove,
 }
