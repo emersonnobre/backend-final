@@ -17,8 +17,13 @@ function equalsOrError(a, b, msg) {
     if (a !== b) throw msg
 }
 
+function numberOrError(value, msg) {
+    if (!Number(value)) throw msg
+}
+
 module.exports = {
     existsOrError,
     notExistsOrError,
     equalsOrError,
+    numberOrError,
 }

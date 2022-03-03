@@ -6,7 +6,7 @@ const {
 } = require('../utils/validation')
 const createResponse = require('../utils/response')
 const userToResponse = require('../domain/dto/userToResponse')
-const statusCode = require('../domain/enums/statusCode')
+const { OK, BADREQUEST, INTERNALSERVERERROR, } = require('../domain/enums/statusCode')
 const userRepository = require('../repositories/user')
 const User = require('../domain/models/user')
 
@@ -14,14 +14,14 @@ async function get() {
     let users = await userRepository.get()
     if (users.length)
         users = users.map(user => userToResponse(user))
-    return createResponse(statusCode.OK, null, users)
+    return createResponse(OK, null, users)
 }
 
 async function getById(id) {
     let user = await userRepository.getById(id)
     if (user)
         user = userToResponse(user)
-    return createResponse(statusCode.OK, null, user)
+    return createResponse(OK, null, user)
 }
 
 async function save(user, id = null) {
@@ -40,7 +40,7 @@ async function save(user, id = null) {
             notExistsOrError(userFromDb, 'Usuário já cadastrado')
         }
     } catch(msg) {
-        return createResponse(statusCode.BADREQUEST, msg)
+        return createResponse(BADREQUEST, msg)
     }
 
     user.password = encryptPassword(user.password)
@@ -51,17 +51,17 @@ async function save(user, id = null) {
     if (user.id) {
         try {
             await userRepository.update(userModel, user.id)
-            return createResponse(statusCode.OK, 'Usuário alterado')
+            return createResponse(OK, 'Usuário alterado')
         } catch(err) {
             console.error(err)
-            return createResponse(statusCode.INTERNALSERVERERROR, err)
+            return createResponse(INTERNALSERVERERROR, err)
         }
     } else {
         try {
             await userRepository.save(userModel)
-            return createResponse(statusCode.OK, 'Usuário inserido')
+            return createResponse(OK, 'Usuário inserido')
         } catch(err) {
-            return createResponse(statusCode.INTERNALSERVERERROR, err)
+            return createResponse(INTERNALSERVERERROR, err)
         }
     }
 }

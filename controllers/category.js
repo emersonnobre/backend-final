@@ -13,6 +13,12 @@ router.route('/')
         res.status(response.status).json(response)
     })
 
+router.route('/tree')
+    .get(async (req, res) => {
+        const response = await categoryService.getTree()
+        res.status(response.status).json(response)
+    })
+
 router.route('/:id')
     .get(async (req, res) => {
         const response = await categoryService.getById(req.params.id)
@@ -26,5 +32,6 @@ router.route('/:id')
         const response = await categoryService.remove(req.params.id)
         res.status(response.status).json(response)
     })
+
 
 module.exports = router

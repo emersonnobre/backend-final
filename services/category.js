@@ -1,22 +1,38 @@
 const { 
-    equalsOrError, 
     existsOrError, 
     notExistsOrError, 
+    numberOrError,
 } = require('../utils/validation')
 const createResponse = require('../utils/response')
-const statusCode = require('../domain/enums/statusCode')
+const { OK, BADREQUEST, INTERNALSERVERERROR, NOCONTENT, CREATED, } = require('../domain/enums/statusCode')
 const categoryRepository = require('../repositories/category')
 const articleRepository = require('../repositories/article')
 const Category = require('../domain/models/category')
 
 async function get() {
-    let categories = await categoryRepository.get()
-    return createResponse(statusCode.OK, null, withPath(categories))
+    try {
+        let categories = await categoryRepository.get()
+        return createResponse(OK, null, withPath(categories))
+    } catch (error) {
+        console.log(error)
+        return createResponse(INTERNALSERVERERROR, error)
+    }
 }
 
 async function getById(id) {
-    let category = await categoryRepository.getById(id)
-    return createResponse(statusCode.OK, null, category)
+    try {
+        numberOrError(id, 'Id deve ser numérico')
+    } catch (error) {
+        return createResponse(BADREQUEST, error)
+    }
+
+    try {
+        let category = await categoryRepository.getById(id)
+        return createResponse(OK, null, category)
+    } catch (error) {
+        console.log(error)
+        return createResponse(INTERNALSERVERERROR, error)
+    }
 }
 
 async function save(category, id = null) {
@@ -24,8 +40,11 @@ async function save(category, id = null) {
 
     try {   
         existsOrError(category.name, 'Nome não informado')
-    } catch(msg) {
-        return createResponse(statusCode.BADREQUEST, msg)
+        if (category.id) {
+            numberOrError(category.id, 'Id deve ser numérico')
+        }
+    } catch(error) {
+        return createResponse(BADREQUEST, error)
     }
 
     const categoryModel = Category(category)
@@ -33,41 +52,47 @@ async function save(category, id = null) {
     if (category.id) {
         try {
             await categoryRepository.update(categoryModel, category.id)
-            return createResponse(statusCode.OK, 'Categoria alterada')
-        } catch(err) {
-            console.error(err)
-            return createResponse(statusCode.INTERNALSERVERERROR, err)
+            return createResponse(NOCONTENT, null)
+        } catch(error) {
+            console.log(error)
+            return createResponse(INTERNALSERVERERROR, error)
         }
     } else {
         try {
             await categoryRepository.save(categoryModel)
-            return createResponse(statusCode.OK, 'Categoria inserida')
-        } catch(err) {
-            console.error(err)
-            return createResponse(statusCode.INTERNALSERVERERROR, err)
+            return createResponse(CREATED, null)
+        } catch(error) {
+            console.log(error)
+            return createResponse(INTERNALSERVERERROR, error)
         }
     }
 }
 
 async function remove(id) {
     try {
+        numberOrError(id, 'Id deve ser numérico')
+
         const subcategory = await categoryRepository.getWhere({ parentId: id })
         notExistsOrError(subcategory, 'Categoria possui subcategorias')
 
         const articles = await articleRepository.getWhere({ categoryId: id })
         notExistsOrError(articles, 'Categoria possui artigos')
+    } catch(error) {
+        return createResponse(BADREQUEST, error)
+    }
 
+    try {
         const rowsDeleted = await categoryRepository.remove(id)
-        existsOrError(rowsDeleted, 'Categoria não encontrada')
-
-        return createResponse(statusCode.OK)
-    } catch(err) {
-        return createResponse(statusCode.BADREQUEST, msg)
+        if (rowsDeleted === 0)
+            return createResponse(BADREQUEST, 'Categoria não encontrada')
+        return createResponse(NOCONTENT, null)
+    } catch (error) {
+        console.log(error)
+        return createResponse(INTERNALSERVERERROR, error)
     }
 }
 
 function withPath(categories) {
-    console.log(JSON.stringify(categories, 2, null))
     const getParent = (categories, parentId) => {
         const parent = categories.filter(parent => parent.id === parentId)
         return parent.length ? parent[0] : null
@@ -94,9 +119,30 @@ function withPath(categories) {
     return categoriesWithPath
 } 
 
+function toTree(categories, tree) {
+    if (!tree) tree = categories.filter(category => !category.parentId) //inicia a estrutura com as categorias pais do topo
+    tree = tree.map(parentNode => {
+        const isChild = node => node.parentId == parentNode.id
+        parentNode.children = toTree(categories, categories.filter(isChild)) //procura as filhas do pai da vez e faz a recursividade
+        return parentNode
+    })
+    return tree
+}
+
+async function getTree() {
+    try {        
+        const categories = await categoryRepository.get()
+        return createResponse(OK, null, toTree(withPath(categories)))
+    } catch (error) {
+        console.log(error)
+        return createResponse(INTERNALSERVERERROR, error)
+    }
+}
+
 module.exports = {
     get,
     getById,
+    getTree,
     save,
     remove,
 }
