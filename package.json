@@ -4,7 +4,8 @@
   "description": "Projeto final de backend desenvolvido durante o curso web completo da Cod3r Cursos",
   "main": "index.js",
   "scripts": {
-    "start": "nodemon"
+    "start": "nodemon",
+    "migrate": "knex migrate:latest"
   },
   "author": "Emerson Nobre",
   "license": "ISC",
@@ -19,6 +20,7 @@
     "node-schedule": "^2.1.0",
     "passport": "^0.5.2",
     "passport-jwt": "^4.0.0",
+    "pg": "^8.7.3",
     "pm2": "^5.2.0",
     "tedious": "^14.3.0"
   },

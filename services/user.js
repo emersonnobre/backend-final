@@ -34,9 +34,8 @@ async function save(user, id = null) {
         existsOrError(user.confirmPassword, 'Confirmação de senha não informada')
         equalsOrError(user.password, user.confirmPassword, 'As senhas não coincidem')
 
-        const userFromDb = await userRepository.getByEmail(user.email)
-
         if (!user.id) {
+            const userFromDb = await userRepository.getByEmail(user.email)
             notExistsOrError(userFromDb, 'Usuário já cadastrado')
         }
     } catch(msg) {
